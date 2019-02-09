@@ -1,12 +1,12 @@
 'use strict'
 
-const fs = require('fs')
-const path = require('path')
+// const fs = require('fs')
+// const path = require('path')
 const glob = require('glob')
-const publishRelease = require('publish-release')
+// const publishRelease = require('publish-release')
 const releaseNotes = require('./lib/release-notes')
-const uploadToS3 = require('./lib/upload-to-s3')
-const uploadLinuxPackages = require('./lib/upload-linux-packages')
+// const uploadToS3 = require('./lib/upload-to-s3')
+// const uploadLinuxPackages = require('./lib/upload-linux-packages')
 
 const CONFIG = require('../config')
 
@@ -22,11 +22,11 @@ const argv = yargs
   .argv
 
 const releaseVersion = CONFIG.computedAppVersion
-const isNightlyRelease = CONFIG.channel === 'nightly'
+// const isNightlyRelease = CONFIG.channel === 'nightly'
 const assetsPath = argv.assetsPath || CONFIG.buildOutputPath
 const assetsPattern = '/**/*(*.exe|*.zip|*.nupkg|*.tar.gz|*.rpm|*.deb|RELEASES*|atom-api.json)'
 const assets = glob.sync(assetsPattern, { root: assetsPath, nodir: true })
-const bucketPath = argv.s3Path || `releases/v${releaseVersion}/`
+// const bucketPath = argv.s3Path || `releases/v${releaseVersion}/`
 
 if (!assets || assets.length === 0) {
   console.error(`No assets found under specified path: ${assetsPath}`)
@@ -44,85 +44,87 @@ async function uploadArtifacts () {
     return
   }
 
-  console.log(`Uploading ${assets.length} release assets for ${releaseVersion} to S3 under '${bucketPath}'`)
+  console.log('TEMP: THIS WOULD HAVE BEEN A RELEASE!')
 
-  await uploadToS3(
-    process.env.ATOM_RELEASES_S3_KEY,
-    process.env.ATOM_RELEASES_S3_SECRET,
-    process.env.ATOM_RELEASES_S3_BUCKET,
-    bucketPath,
-    assets)
+  // console.log(`Uploading ${assets.length} release assets for ${releaseVersion} to S3 under '${bucketPath}'`)
 
-  if (argv.linuxRepoName) {
-    await uploadLinuxPackages(
-      argv.linuxRepoName,
-      process.env.PACKAGE_CLOUD_API_KEY,
-      releaseVersion,
-      assets)
-  } else {
-    console.log('\nNo Linux package repo name specified, skipping Linux package upload.')
-  }
+  // await uploadToS3(
+  //   process.env.ATOM_RELEASES_S3_KEY,
+  //   process.env.ATOM_RELEASES_S3_SECRET,
+  //   process.env.ATOM_RELEASES_S3_BUCKET,
+  //   bucketPath,
+  //   assets)
 
-  const oldReleaseNotes = releaseForVersion.releaseNotes
-  if (oldReleaseNotes) {
-    const oldReleaseNotesPath = path.resolve(CONFIG.buildOutputPath, 'OLD_RELEASE_NOTES.md')
-    console.log(`Saving existing ${releaseVersion} release notes to ${oldReleaseNotesPath}`)
-    fs.writeFileSync(oldReleaseNotesPath, oldReleaseNotes, 'utf8')
-  }
+  // if (argv.linuxRepoName) {
+  //   await uploadLinuxPackages(
+  //     argv.linuxRepoName,
+  //     process.env.PACKAGE_CLOUD_API_KEY,
+  //     releaseVersion,
+  //     assets)
+  // } else {
+  //   console.log('\nNo Linux package repo name specified, skipping Linux package upload.')
+  // }
 
-  if (argv.createGithubRelease) {
-    console.log(`\nGenerating new release notes for ${releaseVersion}`)
-    let newReleaseNotes = ''
-    if (isNightlyRelease) {
-      newReleaseNotes =
-        await releaseNotes.generateForNightly(
-          releaseVersion,
-          process.env.GITHUB_TOKEN,
-          oldReleaseNotes)
-    } else {
-      newReleaseNotes =
-        await releaseNotes.generateForVersion(
-          releaseVersion,
-          process.env.GITHUB_TOKEN,
-          oldReleaseNotes)
-    }
+  // const oldReleaseNotes = releaseForVersion.releaseNotes
+  // if (oldReleaseNotes) {
+  //   const oldReleaseNotesPath = path.resolve(CONFIG.buildOutputPath, 'OLD_RELEASE_NOTES.md')
+  //   console.log(`Saving existing ${releaseVersion} release notes to ${oldReleaseNotesPath}`)
+  //   fs.writeFileSync(oldReleaseNotesPath, oldReleaseNotes, 'utf8')
+  // }
 
-    console.log(`New release notes:\n\n${newReleaseNotes}`)
+  // if (argv.createGithubRelease) {
+  //   console.log(`\nGenerating new release notes for ${releaseVersion}`)
+  //   let newReleaseNotes = ''
+  //   if (isNightlyRelease) {
+  //     newReleaseNotes =
+  //       await releaseNotes.generateForNightly(
+  //         releaseVersion,
+  //         process.env.GITHUB_TOKEN,
+  //         oldReleaseNotes)
+  //   } else {
+  //     newReleaseNotes =
+  //       await releaseNotes.generateForVersion(
+  //         releaseVersion,
+  //         process.env.GITHUB_TOKEN,
+  //         oldReleaseNotes)
+  //   }
 
-    console.log(`Creating GitHub release v${releaseVersion}`)
-    const release =
-      await publishReleaseAsync({
-        token: process.env.GITHUB_TOKEN,
-        owner: 'atom',
-        repo: !isNightlyRelease ? 'atom' : 'atom-nightly-releases',
-        name: CONFIG.computedAppVersion,
-        notes: newReleaseNotes,
-        tag: `v${CONFIG.computedAppVersion}`,
-        draft: !isNightlyRelease,
-        prerelease: CONFIG.channel !== 'stable',
-        editRelease: true,
-        reuseRelease: true,
-        skipIfPublished: true,
-        assets
-      })
+  //   console.log(`New release notes:\n\n${newReleaseNotes}`)
 
-    console.log('Release published successfully: ', release.html_url)
-  } else {
-    console.log('Skipping GitHub release creation')
-  }
+  //   console.log(`Creating GitHub release v${releaseVersion}`)
+  //   const release =
+  //     await publishReleaseAsync({
+  //       token: process.env.GITHUB_TOKEN,
+  //       owner: 'atom',
+  //       repo: !isNightlyRelease ? 'atom' : 'atom-nightly-releases',
+  //       name: CONFIG.computedAppVersion,
+  //       notes: newReleaseNotes,
+  //       tag: `v${CONFIG.computedAppVersion}`,
+  //       draft: !isNightlyRelease,
+  //       prerelease: CONFIG.channel !== 'stable',
+  //       editRelease: true,
+  //       reuseRelease: true,
+  //       skipIfPublished: true,
+  //       assets
+  //     })
+
+  //   console.log('Release published successfully: ', release.html_url)
+  // } else {
+  //   console.log('Skipping GitHub release creation')
+  // }
 }
 
-async function publishReleaseAsync (options) {
-  return new Promise((resolve, reject) => {
-    publishRelease(options, (err, release) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(release)
-      }
-    })
-  })
-}
+// async function publishReleaseAsync (options) {
+//   return new Promise((resolve, reject) => {
+//     publishRelease(options, (err, release) => {
+//       if (err) {
+//         reject(err)
+//       } else {
+//         resolve(release)
+//       }
+//     })
+//   })
+// }
 
 // Wrap the call the async function and catch errors from its promise because
 // Node.js doesn't yet allow use of await at the script scope
